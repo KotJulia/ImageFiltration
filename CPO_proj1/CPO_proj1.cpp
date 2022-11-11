@@ -2,78 +2,125 @@
 #include<opencv2/opencv.hpp>
 #include<opencv2/highgui.hpp>
 
-class Histogram {
+class Thresholding {
 
-public:
-
-    cv::Mat createHistogram(cv::Mat image) {
-        cv::Mat histogram;
-        image.convertTo(image, CV_32F);
-        histogram = cv::Mat::zeros(256, 1, CV_32F);
-        for (int i = 0; i < image.rows; i++) {
-            for (int j = 0; j < image.cols; j++) {
-                int level = 0;
-                level = image.at<float>(i, j);
-                histogram.at<float>(level) += 1;
+    double arithmeticAverage(int i, int j, cv::Mat image, int windowSize) {
+        int sum = 0;
+        int numOfPixels = 0;
+        int arithmeticAverage = 0;
+        for (int x = i - (windowSize - 1) / 2; x <= i + (windowSize - 1) / 2; x++) {
+            if (x < 0 || x >= image.rows) {
+                continue;
+            }
+            for (int y = j - (windowSize - 1) / 2; y <= j + (windowSize - 1) / 2; y++) {
+                if (y < 0 || y >= image.cols) {
+                    continue;
+                }
+                sum += image.at<uchar>(x, y);
+                //std::cout << image.at<uchar>(x, y) << std::endl;
+                numOfPixels += 1;
+                //std::cout << numOfPixels << std::endl;
             }
         }
-        return histogram;
+        arithmeticAverage = sum / numOfPixels;
+        return arithmeticAverage;
     }
 
-    void plotHistogram(cv::Mat histogram) {
-        cv::Mat histogram_image(400, 512, CV_8UC3, cv::Scalar(0, 0, 0));
-        cv::Mat normalized_histogram;
-        normalize(histogram, normalized_histogram, 0, 400, cv::NORM_MINMAX, -1, cv::Mat());
-
-        for (int i = 0; i < 256; i++) {
-            rectangle(histogram_image, cv::Point(2 * i, histogram_image.rows - normalized_histogram.at<float>(i)),
-                cv::Point(2 * (i + 1), histogram_image.rows), cv::Scalar(255, 0, 0));
+    double geometricAverage(int i, int j, cv::Mat image, int windowSize) {
+        int sum = 0;
+        int numOfPixels = 0;
+        int geometricAverage = 0;
+        for (int x = i - (windowSize - 1) / 2; x <= i + (windowSize - 1) / 2; x++) {
+            if (x < 0 || x >= image.rows) {
+                continue;
+            }
+            for (int y = j - (windowSize - 1) / 2; y <= j + (windowSize - 1) / 2; y++) {
+                if (y < 0 || y >= image.cols || image.at<uchar>(x, y) <= 0) {
+                    continue;
+                }
+                sum += log(image.at<uchar>(x, y));
+                //std::cout << image.at<uchar>(x, y)<<std::endl;
+                numOfPixels += 1;
+                //std::cout << sum << std::endl;
+            }
         }
-
-        cv::namedWindow("Histogram", cv::WINDOW_NORMAL);
-        cv::imshow("Histogram", histogram_image);
+        if (numOfPixels <= 0) {
+            geometricAverage = 0;
+        }
+        else {
+            geometricAverage = exp(sum / numOfPixels);
+        }
+        return geometricAverage;
     }
-};
 
-class EqualizedHistogram: public Histogram {
+
+    double median(int i, int j, cv::Mat image, int windowSize) {
+        std::vector<int> listOfElements;
+        for (int x = i - (windowSize - 1) / 2; x <= i + (windowSize - 1) / 2; x++) {
+            if (x < 0 || x >= image.rows) {
+                continue;
+            }
+            for (int y = j - (windowSize - 1) / 2; y <= j + (windowSize - 1) / 2; y++) {
+                if (y < 0 || y >= image.cols) {
+                    continue;
+                }
+                listOfElements.push_back(image.at<uchar>(x, y));
+            }
+        }
+        sort(listOfElements.begin(), listOfElements.end());
+        int middle_index = listOfElements.size() / 2;
+        int middle_index_plus = middle_index + 1;
+        double median = listOfElements.size() % 2 == 0 ? listOfElements[middle_index] : listOfElements[middle_index_plus];
+
+        return median;
+    }
 
 public:
 
-    void histogramEqualization(cv::Mat image, cv::Mat histogram) {
-        image.convertTo(image, CV_32F);
-        float probabilityDistr[255] = {};
-        float CDF = 0.0;
-        float newColorVal;
-        float allPixels = image.rows * image.cols;
+    cv::Mat thresholding(cv::Mat image, int thresholdType, int windowSize){
+        double threshold = 0;
+        cv::Mat imageThresholded = image.clone();
+        for (int i = 0; i < image.rows; i++) {
+            for (int j = 0; j < image.cols; j++) {
 
-        for (int k = 0; k < 255; k++) {
-            probabilityDistr[k] = histogram.at<float>(k) / allPixels;
-            CDF += probabilityDistr[k];
-            newColorVal = round(CDF * 255);
-            for (int i = 0; i < image.rows; i++) {
-                for (int j = 0; j < image.cols; j++) {
-                    if (image.at<float>(i, j) == k) {
-                        image.at<float>(i, j) = newColorVal;
-                    }
+                switch (thresholdType) {
+                case 0:
+                    threshold = arithmeticAverage(i, j, image, windowSize);
+                    break;
+
+                case 1:
+                    threshold = geometricAverage(i, j, image, windowSize);
+                    break;
+                case 2:
+                    threshold = median(i, j, image, windowSize);
+                    break;
+                }
+                
+                if (image.at<uchar>(i, j) < threshold) {
+                    imageThresholded.at<uchar>(i, j) = 0;
+                }
+                else {
+                    imageThresholded.at<uchar>(i, j) = 255;
                 }
             }
         }
+        return imageThresholded;
+
     }
 };
 
 int main()
 {
-    cv::Mat image = cv::imread("C:\\Users\\user\\OneDrive\\Pulpit\\R.jpg", cv::IMREAD_GRAYSCALE);
-    cv::Mat imageGray = image.clone();
-//    cv::cvtColor(image, imageGray, cv::COLOR_BGR2GRAY);
+    cv::Mat image = cv::imread("C:\\Users\\user\\OneDrive\\Pulpit\\ErrorMsg.jpg", cv::IMREAD_GRAYSCALE);
 
-    Histogram H1;
-    EqualizedHistogram H2;
-    cv::Mat hist = H1.createHistogram(image);
-    H1.plotHistogram(hist);
-   // H2.histogramEqualization(imageGray, hist);
-    //cv::Mat newHist = H2.createHistogram(imageGray);
-    //H2.plotHistogram(newHist);
+    Thresholding image2;
+    cv::Mat newImage = image2.thresholding(image, 0, 25);
+    cv::Mat newImage2 = image2.thresholding(image, 1, 25);
+    cv::Mat newImage3 = image2.thresholding(image, 2, 25);
+
+    /*cv::Mat newImage4 = image2.thresholding(image, 0, 30);
+    cv::Mat newImage5 = image2.thresholding(image, 1, 30);
+    cv::Mat newImage6 = image2.thresholding(image, 2, 30);*/
 
     cv::namedWindow("Test");
     cv::imshow("Test", image);
