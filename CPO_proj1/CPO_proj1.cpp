@@ -44,12 +44,10 @@ class Thresholding {
                 //std::cout << sum << std::endl;
             }
         }
-        if (numOfPixels <= 0) {
-            geometricAverage = 0;
-        }
-        else {
-            geometricAverage = exp(sum / numOfPixels);
-        }
+
+
+        geometricAverage = exp(sum / numOfPixels);
+     
         return geometricAverage;
     }
 
@@ -113,10 +111,23 @@ int main()
 {
     cv::Mat image = cv::imread("C:\\Users\\user\\OneDrive\\Pulpit\\ErrorMsg.jpg", cv::IMREAD_GRAYSCALE);
 
+    cv::Mat image3 = cv::imread("C:\\Users\\user\\OneDrive\\Pulpit\\animeDziewczynka.jpg", cv::IMREAD_GRAYSCALE);
+
+    cv::Mat image4 = cv::imread("C:\\Users\\user\\OneDrive\\Pulpit\\dexter.jpg", cv::IMREAD_GRAYSCALE);
+
     Thresholding image2;
-    cv::Mat newImage = image2.thresholding(image, 0, 25);
+   /* cv::Mat newImage = image2.thresholding(image, 0, 25);
     cv::Mat newImage2 = image2.thresholding(image, 1, 25);
-    cv::Mat newImage3 = image2.thresholding(image, 2, 25);
+    cv::Mat newImage3 = image2.thresholding(image, 2, 25);*/
+
+   /* cv::Mat newImage4 = image2.thresholding(image3, 0, 25);
+    cv::Mat newImage5 = image2.thresholding(image3, 1, 25);
+    cv::Mat newImage6 = image2.thresholding(image3, 2, 25);*/
+
+
+    cv::Mat newImage7 = image2.thresholding(image4, 0, 9);
+    cv::Mat newImage8 = image2.thresholding(image4, 1, 9);
+    cv::Mat newImage9 = image2.thresholding(image4, 2, 9);
 
     /*cv::Mat newImage4 = image2.thresholding(image, 0, 30);
     cv::Mat newImage5 = image2.thresholding(image, 1, 30);
