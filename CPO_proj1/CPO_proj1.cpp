@@ -27,7 +27,7 @@ double Thresholding::geometricAverage(int i, int j, cv::Mat image, int windowSiz
 			continue;
 		}
 		for (int y = j - (windowSize - 1) / 2; y <= j + (windowSize - 1) / 2; y++) {
-			if (y < 0 || y >= image.cols || image.at<uchar>(x, y) <= 0) {
+			if (y < 0 || y >= image.cols ) {
 				continue;
 			}
 			sum += log(image.at<uchar>(x, y));
@@ -98,19 +98,23 @@ cv::Mat Thresholding::thresholding(cv::Mat image, int thresholdType, int windowS
 
 int main()
 {
-    cv::Mat image = cv::imread("ErrorMsg.jpg", cv::IMREAD_GRAYSCALE);
+    //cv::Mat image = cv::imread("ErrorMsg.jpg", cv::IMREAD_GRAYSCALE);
+	//cv::Mat image = cv::imread("Kruszynka.jpeg", cv::IMREAD_GRAYSCALE);
+	cv::Mat image = cv::imread("book2.jpg", cv::IMREAD_GRAYSCALE);
+	//cv::Mat image = cv::imread("sea.jpg", cv::IMREAD_GRAYSCALE);
+
 
     Thresholding image2;
 
-    cv::Mat newImageArithmetic = image2.thresholding(image, 0, 15);
-    cv::Mat newImageGeometric = image2.thresholding(image, 1, 15);
-    cv::Mat newImageMedian = image2.thresholding(image, 2, 15);
+    cv::Mat newImageArithmetic = image2.thresholding(image, 0, 23);
+    cv::Mat newImageGeometric = image2.thresholding(image, 1, 23);
+    cv::Mat newImageMedian = image2.thresholding(image, 2, 23);
 
     while (true)
     {
 		cv::namedWindow("Original image");
 		cv::imshow("Original image", image);
-
+		
 		cv::namedWindow("Arithmetic mean");
 		cv::imshow("Arithmetic mean", newImageArithmetic);
 
